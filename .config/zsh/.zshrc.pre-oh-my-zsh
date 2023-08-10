@@ -1,0 +1,235 @@
+autoload -U colors && colors	# Load colors
+
+# autoload -Uz vcs_info
+# precmd() { vcs_info }
+
+function in_git_repos() {
+    test "`git rev-parse --is-inside-work-tree 2>/dev/null`" = "true"
+}
+
+function git_current_branch() {
+    if in_git_repos; then
+        ref=$(git symbolic-ref HEAD 2> /dev/null) || \
+        ref=$(git rev-parse --short HEAD 2> /dev/null) || return
+        echo ${ref#refs/heads/}
+    fi
+}
+
+function git_status_is_clean() {
+    if in_git_repos; then
+        local lines=$(git status --porcelain | grep -Ev '^\?\? ' | wc -l)
+        test $lines = 0
+    fi
+}
+
+function git_unknown_files() {
+    if in_git_repos; then
+        local lines=$(git status --porcelain | grep -E '^\?\? ' | wc -l)
+        test $lines = 0
+    fi
+}
+
+function git_stash_is_clean() {
+    if in_git_repos; then
+        local lines=$(git stash list | wc -l)
+        test $lines = 0
+    fi
+}
+
+function git_no_branches() {
+    if in_git_repos; then
+        local lines=$(git branch | wc -l)
+        test $lines = 1
+    fi
+}
+
+function git_single_remote() {
+    if in_git_repos; then
+        local lines=$(git remote | wc -l)
+        test $lines -le 1
+    fi
+}
+
+function git_no_remote() {
+    if in_git_repos; then
+        local lines=$(git remote | wc -l)
+        test $lines = 0
+    fi
+}
+
+function git_branch_is_pushed() {
+    if in_git_repos; then
+        if git branch -r | grep "origin/master" >/dev/null 2>&1; then
+            git_no_remote || git diff-tree --quiet origin/master heads/master
+        fi
+    fi
+}
+
+#-----------------------------------------------------------------------------
+
+function git_prompt_precmd() {
+    local GITINFO=""
+    if [ ! -z `git_current_branch` ]; then
+        GITINFO="`git_current_branch`"
+        if ! git_status_is_clean; then
+            GITINFO="$GITINFO*"
+        fi
+        if ! git_unknown_files; then
+            GITINFO="${GITINFO}?"
+        fi
+        if ! git_branch_is_pushed; then
+            GITINFO="$GITINFO➚"
+        fi
+        if ! git_stash_is_clean; then
+            GITINFO="$GITINFO☰"
+        fi
+        if ! git_no_branches; then
+            GITINFO="$GITINFO⌥"
+        fi
+        if ! git_single_remote; then
+            GITINFO="$GITINFO®"
+        fi
+        GITINFO="$GITINFO"
+    fi
+    echo $GITINFO
+}
+
+function precmd() {
+    PSVAR=`git_prompt_precmd`
+}
+
+PS1="%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magenta]%}%~%{$fg[red]%}]%(?.%{$fg[green]%}.%{$fg[red]%})$ %{$fg[red]%}%v%{$reset_color%}%b "
+
+# zstyle ':vcs_info:git:*' formats '%b '
+# precmd() {
+#     # As always first run the system so everything is setup correctly.
+#     vcs_info
+#     # And then just set PS1, RPS1 and whatever you want to. This $PS1
+#     # is (as with the other examples above too) just an example of a very
+#     # basic single-line prompt. See "man zshmisc" for details on how to
+#     # make this less readable. :-)
+#     if [[ -z ${vcs_info_msg_0_} ]]; then
+#         # Oh hey, nothing from vcs_info, so we got more space.
+#         # Let's print a longer part of $PWD...
+#         PS1="%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magenta]%}%~%{$fg[red]%}]%(?.$fg[green].$fg[red])$ %{$fg[red]%}${vcs_info_msg_0_}%{$reset_color%}%b "
+#         # PS1="%5~%# "
+#     else
+#         # vcs_info found something, that needs space. So a shorter $PWD
+#         # makes sense.
+#         # PS1="%3~${vcs_info_msg_0_}%# "
+#         PS1="%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magenta]%}%~%{$fg[red]%}]%(?.$fg[green].$fg[red])$ %{$fg[red]%}${vcs_info_msg_0_}%{$reset_color%}%b "
+#     fi
+# }
+
+
+# Check the repository for changes so they can be used in %u/%c (see
+# below). This comes with a speed penalty for bigger repositories.
+# zstyle ':vcs_info:*' check-for-changes true
+# zstyle ':vcs_info:*' get-revision true
+
+# setopt PROMPT_SUBST
+# PROMPT='%B%F{yellow}[%f%F{blue}%n%f%F{yellow}@%f%F{red}%m%f%F{yellow}]%f %F{blue}%~%f %F{red}${vcs_info_msg_0_}%f %(?.%F{green}>%f.%F{red}>%f)%b '
+
+# setopt autocd	# Autoatically cd into typed directory
+
+# History in cache directory
+export HISTSIZE=10000000
+export SAVEHIST=10000000
+export HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/history"
+
+# Load aliases and shortcuts if existent.
+# [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc" ] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc" ] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc" ] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc"
+
+# Uncomment one of the following lines to change the auto-update behavior
+# zstyle ':omz:update' mode disabled  # disable automatic updates
+# zstyle ':omz:update' mode auto      # update automatically without asking
+# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+
+# Uncomment the following line to change how often to auto-update (in days).
+# zstyle ':omz:update' frequency 13
+
+# Uncomment the following line if pasting URLs and other text is messed up.
+# DISABLE_MAGIC_FUNCTIONS="true"
+
+CASE_SENSITIVE=false
+
+# Uncomment the following line to disable colors in ls.
+# DISABLE_LS_COLORS="true"
+
+# Uncomment the following line to disable auto-setting terminal title.
+# DISABLE_AUTO_TITLE="true"
+
+# Uncomment the following line to enable command auto-correction.
+ENABLE_CORRECTION="true"
+
+# Uncomment the following line to display red dots whilst waiting for completion.
+# You can also set it to another string to have that shown instead of the default red dots.
+# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
+# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
+COMPLETION_WAITING_DOTS="true"
+
+# Uncomment the following line if you want to disable marking untracked files
+# under VCS as dirty. This makes repository status check for large repositories
+# much, much faster.
+# DISABLE_UNTRACKED_FILES_DIRTY="true"
+
+# Uncomment the following line if you want to change the command execution time
+# stamp shown in the history command output.
+# You can set one of the optional three formats:
+# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# or set a custom format using the strftime function format specifications,
+# see 'man strftime' for details.
+# HIST_STAMPS="mm/dd/yyyy"
+
+# Would you like to use another custom folder than $ZSH/custom?
+# ZSH_CUSTOM=/path/to/new-custom-folder
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+# plugins=(git)
+
+# User configuration
+
+# export MANPATH="/usr/local/man:$MANPATH"
+
+# You may need to manually set your language environment
+# export LANG=en_US.UTF-8
+
+# Preferred editor for local and remote sessions
+# if [[ -n $SSH_CONNECTION ]]; then
+#   export EDITOR='vim'
+# else
+#   export EDITOR='mvim'
+# fi
+
+# Compilation flags
+# export ARCHFLAGS="-arch x86_64"
+
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+#
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
+# alias luamake=/luamake
+
+
+# export ZSH="/usr/share/oh-my-zsh"
+# ZSH_THEME="robbyrussell"
+
+
+# Export the Android SDK path
+export ANDROID_HOME=$HOME/Android/Sdk/cmdline-tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+# source /usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh 2>/dev/null
+#source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+# source $ZSH/oh-my-zsh.sh
