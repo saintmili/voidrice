@@ -25,6 +25,9 @@ alias \
 	ccat="highlight --out-format=ansi" \
 	ip="ip -color=auto"
 
+# Use nvim instead of vim
+alias vim="nvim"
+
 # These common commands are just too long! Abbreviate them.
 # alias \
 # 	ka="killall" \
@@ -38,7 +41,6 @@ alias \
 # 	xi="sudo xbps-install" \
 # 	xr="sudo xbps-remove -R" \
 # 	xq="xbps-query" \
-# 	z="zathura"
 
 alias \
 	lf="lfub" \

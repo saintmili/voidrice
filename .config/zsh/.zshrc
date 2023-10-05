@@ -123,3 +123,9 @@ source $ZSH/oh-my-zsh.sh
 [ -f "${XDG_CACHE_HOMEl-$HOME/.config}/shell/aliasrc" ] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc"
 
 alias luamake=/home/mili/lua-language-server/3rd/luamake/luamake
+
+# bun completions
+[ -s "/home/mili/.bun/_bun" ] && source "/home/mili/.bun/_bun"
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+

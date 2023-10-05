@@ -9,3 +9,6 @@ setxkbmap -option caps:super,altwin:menu_win
 killall xcape 2>/dev/null ; xcape -e 'Super_L=Escape'
 # Turn off caps lock if on since there is no longer a key for it.
 xset -q | grep -q "Caps Lock:\s*on" && xdotool key Caps_Lock
+# Perisan keyboard layout
+setxkbmap -option 'grp:alts_toggle' -layout 'us,ir' -variant ,,
+

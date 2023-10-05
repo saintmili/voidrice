@@ -10,6 +10,8 @@ vim.opt.expandtab = true
 
 vim.opt.smartindent = true
 
+vim.opt.encoding = 'utf-8'
+
 vim.opt.wrap = false
 
 vim.opt.swapfile = false
@@ -20,7 +22,7 @@ vim.opt.undofile = true
 vim.opt.hlsearch = false
 vim.opt.incsearch = true
 
-vim.opt.termguicolors = true
+vim.opt.termguicolors = false
 
 vim.opt.scrolloff = 8
 vim.opt.signcolumn = "yes"
@@ -28,7 +30,16 @@ vim.opt.isfname:append("@-@")
 
 vim.opt.updatetime = 50
 
-vim.opt.colorcolumn = "80"
+-- vim.opt.colorcolumn = "80"
 
+vim.opt.showcmd = true
+
+vim.opt.background = 'dark'
+
+vim.opt.cursorline = true
+
+vim.cmd[[colorscheme dracula]]
+vim.cmd[[hi Normal guibg=NONE ctermbg=NONE]]
 
 vim.g.vimwiki_list = { { path = '~/Mili/wiki' } }
+
