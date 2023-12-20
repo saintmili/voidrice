@@ -1,3 +1,3 @@
-require('saintmili.packer')
-require("saintmili.remap")
+require("saintmili.remaps")
+require("saintmili.lazy")
 require("saintmili.set")
